@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0d1229" />
+  <title>New Wow</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@600;700&family=JetBrains+Mono:wght@500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ==========================================================================
+       DESIGN TOKENS & RESET
+       ========================================================================== */
+    :root {
+      --bg-top: #0c1330;
+      --bg-mid: #131a42;
+      --bg-bottom: #21164a;
+
+      --text-primary: #ffffff;
+      --accent-cyan: #00f0ff;
+      --accent-indigo: #6366f1;
+      --accent-violet: #a855f7;
+      --accent-magenta: #ec4899;
+
+      --font-display: 'Syne', system-ui, -apple-system, sans-serif;
+      --font-bengali: 'Hind Siliguri', 'Noto Sans Bengali', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+      --card-gap: clamp(12px, 1.8vw, 24px);
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      min-height: 100svh;
+      color: var(--text-primary);
+      font-family: var(--font-display);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+
+    body {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background:
+        radial-gradient(ellipse 90% 55% at 50% 0%, rgba(0, 240, 255, 0.18), transparent 65%),
+        radial-gradient(ellipse 95% 65% at 50% 100%, rgba(168, 85, 247, 0.34), transparent 70%),
+        linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 50%, var(--bg-bottom) 100%);
+    }
+
+    /* ==========================================================================
+       AMBIENT LIGHTING & PARTICLE CANVAS
+       ========================================================================== */
+    .ambient-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .aurora-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .aurora-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(95px);
+      opacity: 0.48;
+      will-change: transform;
+      animation: orbFloat 16s ease-in-out infinite alternate;
+    }
+
+    .aurora-orb--cyan {
+      width: clamp(260px, 42vw, 560px);
+      height: clamp(260px, 42vw, 560px);
+      top: -12%;
+      left: -8%;
+      background: radial-gradient(circle, rgba(0, 240, 255, 0.44), transparent 70%);
+    }
+
+    .aurora-orb--violet {
+      width: clamp(280px, 46vw, 620px);
+      height: clamp(280px, 46vw, 620px);
+      bottom: -10%;
+      right: -8%;
+      background: radial-gradient(circle, rgba(168, 85, 247, 0.52), transparent 70%);
+      animation-delay: -6s;
+      animation-duration: 20s;
+    }
+
+    .aurora-orb--magenta {
+      width: clamp(240px, 38vw, 480px);
+      height: clamp(240px, 38vw, 480px);
+      bottom: -16%;
+      left: 20%;
+      background: radial-gradient(circle, rgba(236, 72, 153, 0.36), transparent 70%);
+      animation-delay: -10s;
+    }
+
+    @keyframes orbFloat {
+      0% { transform: translate3d(0, 0, 0) scale(1); }
+      100% { transform: translate3d(3.5vw, 3vh, 0) scale(1.08); }
+    }
+
+    .cursor-aura {
+      display: none;
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .cursor-aura {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 360px;
+        height: 360px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(0, 240, 255, 0.12) 0%, rgba(168, 85, 247, 0.06) 45%, transparent 72%);
+        pointer-events: none;
+        z-index: 1;
+        transform: translate3d(-50%, -50%, 0);
+        will-change: transform;
+      }
+    }
+
+    /* ==========================================================================
+       SINGLE-SCREEN SHOWCASE (FITS IN 100SVH WITHOUT SCROLLING)
+       ========================================================================== */
+    .showcase {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      min-height: 100svh;
+      padding: clamp(12px, 2svh, 24px) 0 clamp(16px, 2.5svh, 28px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: clamp(14px, 2.6svh, 30px);
+    }
+
+    /* ==========================================================================
+       ATTRACTIVE 20-IMAGE AUTO-SLIDING GALLERY (PURE IMAGES, NO NUMBERS)
+       ========================================================================== */
+    .marquee-stage {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(8px, 1.5svh, 18px);
+      mask-image: linear-gradient(to right, transparent 0%, #000 5%, #000 95%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 5%, #000 95%, transparent 100%);
+      opacity: 0;
+      transform: translateY(14px);
+      animation: fadeUp 0.85s var(--ease-out-expo) 0.08s forwards;
+    }
+
+    .marquee-row {
+      width: 100%;
+      overflow: hidden;
+      padding: clamp(8px, 1.3svh, 14px) 0;
+    }
+
+    .marquee-track {
+      display: flex;
+      width: max-content;
+      will-change: transform;
+      transform: translate3d(0, 0, 0);
+    }
+
+    /* Rapid, continuous, seamless RIGHT-TO-LEFT infinite scroll */
+    .marquee-row--fast .marquee-track {
+      animation: marqueeRightToLeft 21s linear infinite;
+    }
+
+    .marquee-row--parallax .marquee-track {
+      animation: marqueeRightToLeft 26s linear infinite;
+    }
+
+    @media (max-width: 768px) {
+      .marquee-row--fast .marquee-track {
+        animation-duration: 17s;
+      }
+      .marquee-row--parallax .marquee-track {
+        animation-duration: 21s;
+      }
+    }
+
+    @keyframes marqueeRightToLeft {
+      0% { transform: translate3d(0, 0, 0); }
+      100% { transform: translate3d(-50%, 0, 0); }
+    }
+
+    .marquee-group {
+      display: flex;
+      align-items: center;
+      gap: var(--card-gap);
+      padding-right: var(--card-gap);
+    }
+
+    /* Kinetic Floating Wave Wrapper */
+    .art-card {
+      --i: 0;
+      position: relative;
+      flex: 0 0 auto;
+      padding: 3px;
+      border-radius: clamp(14px, 1.8vw, 22px);
+      background: linear-gradient(
+        135deg,
+        rgba(0, 240, 255, 0.85),
+        rgba(255, 255, 255, 0.4) 48%,
+        rgba(236, 72, 153, 0.82) 100%
+      );
+      background-size: 200% 200%;
+      box-shadow:
+        0 10px 26px rgba(0, 240, 255, 0.18),
+        0 12px 30px rgba(168, 85, 247, 0.24);
+      animation:
+        cardFloat 4.2s ease-in-out infinite,
+        borderGlowShift 5s ease-in-out infinite;
+      animation-delay: calc(var(--i) * -0.45s);
+      transition: box-shadow 0.45s ease;
+      will-change: transform;
+      cursor: pointer;
+    }
+
+    @keyframes cardFloat {
+      0%, 100% { transform: translate3d(0, -4px, 0) rotate(-0.4deg); }
+      50% { transform: translate3d(0, 5px, 0) rotate(0.4deg); }
+    }
+
+    @keyframes borderGlowShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    .art-card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: clamp(11px, 1.5vw, 19px);
+      overflow: hidden;
+      background: #1a244d;
+      transition: transform 0.5s var(--ease-out-expo);
+    }
+
+    /* Compact viewport-aware varied sizes so buttons always stay visible */
+    .art-card--tall {
+      width: clamp(98px, 12.5vw, 176px);
+      height: clamp(114px, 20svh, 208px);
+    }
+    .art-card--wide {
+      width: clamp(146px, 19.5vw, 270px);
+      height: clamp(98px, 16.5svh, 174px);
+    }
+    .art-card--square {
+      width: clamp(108px, 14.5vw, 194px);
+      height: clamp(108px, 18.5svh, 194px);
+    }
+    .art-card--cinema {
+      width: clamp(156px, 21.5vw, 292px);
+      height: clamp(94px, 15.5svh, 166px);
+    }
+    .art-card--portrait {
+      width: clamp(104px, 13.5vw, 186px);
+      height: clamp(110px, 19svh, 198px);
+    }
+
+    .stagger-up { margin-top: clamp(-7px, -0.7svh, -3px); }
+    .stagger-down { margin-top: clamp(3px, 0.7svh, 7px); }
+
+    .art-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      filter: contrast(1.04) saturate(1.12) brightness(1.03);
+      transition: transform 0.7s var(--ease-out-expo), filter 0.45s ease;
+      pointer-events: none;
+    }
+
+    /* Pure crystal corner highlight (ZERO black overlay anywhere on image) */
+    .art-card-inner::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background: linear-gradient(
+        145deg,
+        rgba(255, 255, 255, 0.22) 0%,
+        rgba(0, 240, 255, 0.05) 26%,
+        transparent 52%
+      );
+      pointer-events: none;
+    }
+
+    /* Continuous subtle light shimmer sweep across cards */
+    .art-card-inner::after {
+      content: '';
+      position: absolute;
+      top: -100%;
+      left: -80%;
+      width: 50%;
+      height: 300%;
+      z-index: 2;
+      background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.34), transparent);
+      transform: rotate(24deg);
+      transition: left 0.75s var(--ease-out-expo);
+      pointer-events: none;
+    }
+
+    @media (hover: hover) {
+      .art-card:hover {
+        box-shadow:
+          0 18px 42px rgba(0, 240, 255, 0.38),
+          0 16px 40px rgba(236, 72, 153, 0.32);
+        z-index: 5;
+      }
+      .art-card:hover .art-card-inner {
+        transform: scale(1.04);
+      }
+      .art-card:hover img {
+        transform: scale(1.1);
+        filter: contrast(1.08) saturate(1.18) brightness(1.06);
+      }
+      .art-card:hover .art-card-inner::after {
+        left: 145%;
+      }
+    }
+
+    /* ==========================================================================
+       SINGLE-LINE TITLE ("Viral Video") WITH ANIMATED LINING EFFECT
+       ========================================================================== */
+    .title-wrap {
+      padding: 0 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(14px);
+      animation: fadeUp 0.85s var(--ease-out-expo) 0.22s forwards;
+    }
+
+    .title-box {
+      position: relative;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(8px, 1.2svh, 14px);
+    }
+
+    .main-title {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(1.75rem, 6.2vw, 3.55rem);
+      line-height: 1.05;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      background: linear-gradient(105deg, #ffffff 8%, #00f0ff 38%, #f472b6 68%, #ffffff 95%);
+      background-size: 220% auto;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      filter: drop-shadow(0 0 24px rgba(0, 240, 255, 0.38));
+      animation:
+        shimmerText 4.5s linear infinite,
+        titlePulse 3.6s ease-in-out infinite;
+    }
+
+    @keyframes shimmerText {
+      to { background-position: 220% center; }
+    }
+
+    @keyframes titlePulse {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(0, 240, 255, 0.34)); }
+      50% { transform: scale(1.025); filter: drop-shadow(0 0 34px rgba(236, 72, 153, 0.48)); }
+    }
+
+    /* Animated Dual Laser Lining Effect Under Title */
+    .title-lining {
+      position: relative;
+      width: 112%;
+      max-width: 88vw;
+      height: 3px;
+      border-radius: 999px;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(0, 240, 255, 0.4) 20%,
+        rgba(168, 85, 247, 0.65) 50%,
+        rgba(236, 72, 153, 0.4) 80%,
+        transparent 100%
+      );
+      overflow: visible;
+    }
+
+    .title-lining::before {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: 0;
+      width: 34%;
+      height: 5px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, #00f0ff, #ffffff, #f472b6, transparent);
+      box-shadow: 0 0 18px #00f0ff, 0 0 28px #f472b6;
+      animation: laserSweep 2.4s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+    }
+
+    .title-lining::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 9px;
+      height: 9px;
+      border-radius: 2px;
+      background: #ffffff;
+      box-shadow: 0 0 14px #00f0ff, 0 0 24px #a855f7;
+      transform: translate(-50%, -50%) rotate(45deg);
+      animation: diamondPulse 2.4s ease-in-out infinite;
+    }
+
+    @keyframes laserSweep {
+      0% { left: 2%; }
+      100% { left: 64%; }
+    }
+
+    @keyframes diamondPulse {
+      0%, 100% { transform: translate(-50%, -50%) rotate(45deg) scale(0.9); opacity: 0.8; }
+      50% { transform: translate(-50%, -50%) rotate(225deg) scale(1.25); opacity: 1; }
+    }
+
+    /* ==========================================================================
+       TWO PREMIUM BUTTONS (SINGLE-LINE BENGALI TEXT, NEVER WRAPS)
+       ========================================================================== */
+    .cta-buttons-wrap {
+      position: relative;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(12px, 2vw, 24px);
+      width: 100%;
+      max-width: 720px;
+      padding: 0 16px;
+      opacity: 0;
+      transform: translateY(16px);
+      animation: fadeUp 0.85s var(--ease-out-expo) 0.36s forwards;
+    }
+
+    /* BUTTON 1: Luminous Aurora Gradient + Ambient Glow + Shine + Animated Arrow */
+    .btn-aurora {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(10px, 2vw, 14px);
+      min-width: min(100%, 270px);
+      min-height: clamp(50px, 6.6svh, 60px);
+      padding: clamp(11px, 1.5svh, 15px) clamp(18px, 4vw, 30px);
+      border: none;
+      border-radius: 18px;
+      cursor: pointer;
+      font-family: var(--font-bengali);
+      font-size: clamp(0.86rem, 3.6vw, 1.05rem);
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+      color: #050816;
+      background: linear-gradient(125deg, #00f0ff 0%, #5eead4 28%, #818cf8 68%, #f472b6 100%);
+      background-size: 220% 220%;
+      box-shadow:
+        0 12px 34px rgba(0, 240, 255, 0.38),
+        0 0 0 1px rgba(255, 255, 255, 0.58) inset;
+      overflow: hidden;
+      transition:
+        transform 0.4s var(--ease-spring),
+        box-shadow 0.45s ease,
+        background-position 0.7s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-aurora::before {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 20px;
+      background: inherit;
+      filter: blur(16px);
+      opacity: 0.5;
+      z-index: -1;
+    }
+
+    .btn-aurora::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -75%;
+      width: 55%;
+      height: 200%;
+      background: linear-gradient(to right, rgba(255,255,255,0), rgba(255,255,255,0.7), rgba(255,255,255,0));
+      transform: skewX(-24deg);
+      transition: left 0.75s var(--ease-out-expo);
+      pointer-events: none;
+    }
+
+    .btn-aurora-icon {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      background: rgba(5, 8, 22, 0.14);
+    }
+
+    .btn-aurora-icon svg {
+      width: 15px;
+      height: 15px;
+      stroke: #050816;
+      stroke-width: 2.3;
+      fill: none;
+      transition: transform 0.4s var(--ease-out-expo);
+    }
+
+    .btn-aurora:hover {
+      transform: translateY(-4px) scale(1.03);
+      background-position: 100% 50%;
+      box-shadow:
+        0 18px 48px rgba(0, 240, 255, 0.54),
+        0 0 34px rgba(244, 114, 182, 0.38),
+        0 0 0 1px rgba(255, 255, 255, 0.78) inset;
+    }
+
+    .btn-aurora:hover::after {
+      left: 135%;
+    }
+
+    .btn-aurora:hover .btn-aurora-icon svg {
+      transform: translateX(3px);
+    }
+
+    .btn-aurora:active {
+      transform: scale(0.96);
+    }
+
+    /* BUTTON 2: Futuristic Frosted Glass + Rotating Laser Border + Spotlight */
+    .btn-cyberglass {
+      --mx: 50%;
+      --my: 50%;
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(8px, 1.8vw, 12px);
+      min-width: min(100%, 270px);
+      min-height: clamp(50px, 6.6svh, 60px);
+      padding: clamp(11px, 1.5svh, 15px) clamp(16px, 3.8vw, 28px);
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      font-family: var(--font-bengali);
+      font-size: clamp(0.84rem, 3.4vw, 1.02rem);
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+      color: #ffffff;
+      background: rgba(24, 28, 66, 0.68);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      box-shadow:
+        0 14px 38px rgba(16, 22, 54, 0.55),
+        0 0 24px rgba(168, 85, 247, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.28);
+      overflow: hidden;
+      isolation: isolate;
+      transition:
+        transform 0.45s var(--ease-spring),
+        box-shadow 0.45s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-cyberglass::before {
+      content: '';
+      position: absolute;
+      inset: -120%;
+      z-index: -2;
+      background: conic-gradient(
+        from 0deg,
+        transparent 0deg 245deg,
+        rgba(0, 240, 255, 1) 295deg,
+        rgba(236, 72, 153, 0.95) 335deg,
+        transparent 360deg
+      );
+      animation: rotateBorder 3.4s linear infinite;
+    }
+
+    .btn-cyberglass::after {
+      content: '';
+      position: absolute;
+      inset: 1.5px;
+      z-index: -1;
+      border-radius: 999px;
+      background:
+        radial-gradient(120px circle at var(--mx) var(--my), rgba(0, 240, 255, 0.28), transparent 70%),
+        linear-gradient(180deg, rgba(36, 42, 92, 0.9) 0%, rgba(22, 24, 62, 0.94) 100%);
+    }
+
+    @keyframes rotateBorder {
+      to { transform: rotate(360deg); }
+    }
+
+    .cyber-node {
+      flex-shrink: 0;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      box-shadow: 0 0 14px var(--accent-cyan), 0 0 22px var(--accent-violet);
+      transition: transform 0.4s var(--ease-spring), background 0.3s ease;
+    }
+
+    .cyber-brackets {
+      flex-shrink: 0;
+      font-family: var(--font-mono);
+      color: var(--accent-cyan);
+      opacity: 0.88;
+      transition: transform 0.35s var(--ease-out-expo), opacity 0.35s ease;
+    }
+
+    .btn-cyberglass:hover {
+      transform: translateY(-4px) scale(1.025);
+      box-shadow:
+        0 18px 46px rgba(0, 240, 255, 0.28),
+        0 0 34px rgba(168, 85, 247, 0.45);
+    }
+
+    .btn-cyberglass:hover .cyber-node {
+      transform: scale(1.35);
+      background: #f472b6;
+    }
+
+    .btn-cyberglass:hover .cyber-brackets--left {
+      transform: translateX(-3px);
+      opacity: 1;
+    }
+
+    .btn-cyberglass:hover .cyber-brackets--right {
+      transform: translateX(3px);
+      opacity: 1;
+    }
+
+    .btn-cyberglass:active {
+      transform: scale(0.95);
+    }
+
+    .click-ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.48);
+      transform: scale(0);
+      animation: rippleAnim 0.65s var(--ease-out-expo) forwards;
+      pointer-events: none;
+    }
+
+    @keyframes rippleAnim {
+      to { transform: scale(4); opacity: 0; }
+    }
+
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 640px) {
+      .cta-buttons-wrap {
+        flex-direction: column;
+      }
+      .btn-aurora,
+      .btn-cyberglass {
+        width: 100%;
+        max-width: 340px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="ambientCanvas" class="ambient-canvas" aria-hidden="true"></canvas>
+
+  <div class="aurora-layer" aria-hidden="true">
+    <div class="aurora-orb aurora-orb--cyan"></div>
+    <div class="aurora-orb aurora-orb--violet"></div>
+    <div class="aurora-orb aurora-orb--magenta"></div>
+  </div>
+
+  <div id="cursorAura" class="cursor-aura" aria-hidden="true"></div>
+
+  <main class="showcase">
+    <!-- 20 AUTO-SLIDING IMAGES (PURE IMAGES, NO NUMBERS) -->
+    <section class="marquee-stage" aria-label="Viral Video Gallery">
+      <div class="marquee-row marquee-row--fast">
+        <div class="marquee-track" id="trackRow1">
+          <div class="marquee-group" id="groupRow1"></div>
+        </div>
+      </div>
+
+      <div class="marquee-row marquee-row--parallax">
+        <div class="marquee-track" id="trackRow2">
+          <div class="marquee-group" id="groupRow2"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SINGLE-LINE TITLE WITH ANIMATED LINING EFFECT -->
+    <div class="title-wrap">
+      <div class="title-box">
+        <h1 class="main-title">Viral Video</h1>
+        <span class="title-lining" aria-hidden="true"></span>
+      </div>
+    </div>
+
+    <!-- TWO DISTINCT PREMIUM BUTTONS -->
+    <div class="cta-buttons-wrap">
+      <button type="button" id="btnAurora" class="btn-aurora">
+        <span>নতুন ভিডিও দেখুন</span>
+        <span class="btn-aurora-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M5 12h14M13 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </span>
+      </button>
+
+      <button type="button" id="btnCyber" class="btn-cyberglass">
+        <span class="cyber-node" aria-hidden="true"></span>
+        <span class="cyber-brackets cyber-brackets--left" aria-hidden="true">[</span>
+        <span>সব ভাইরাল ভিডিও দেখুন</span>
+        <span class="cyber-brackets cyber-brackets--right" aria-hidden="true">]</span>
+      </button>
+    </div>
+  </main>
+
+  <script>
+    (() => {
+      'use strict';
+
+      /* ========================================================================
+         ১. বাটন দুটির লিংক এখানে কোটেশন (" ") এর ভেতরে সেট করুন
+         ======================================================================== */
+      const BUTTON_1_LINK = "https://auctionr.org/4/17d715a38e1ef146ab3fdac48e6a43cb"; // "নতুন ভিডিও দেখুন" বাটনের লিংক
+      const BUTTON_2_LINK = "https://auctionr.org/4/17d715a38e1ef146ab3fdac48e6a43cb"; // "সব ভাইরাল ভিডিও দেখুন" বাটনের লিংক
+
+      /* ========================================================================
+         ২. এখানে আপনার ২০টি ছবির লিংক সহজেই পরিবর্তন করুন (১ থেকে ২০)
+         ======================================================================== */
+      const IMAGE_LINKS = [
+        "https://i.ibb.co.com/fYKYnytw/FB-IMG-1795363526193.jpg", // Image 01
+        "https://i.ibb.co.com/0yvg5DgK/FB-IMG-1795363624951.jpg", // Image 02
+        "https://i.ibb.co.com/Jj0JHyqY/FB-IMG-1795363604322.jpg", // Image 03
+        "https://i.ibb.co.com/nNLWkVKZ/FB-IMG-1795363581961.jpg", // Image 04
+        "https://i.ibb.co.com/rfbt0MWG/FB-IMG-1795363559108.jpg", // Image 05
+        "https://i.ibb.co.com/Q3xRtw9Y/FB-IMG-1795363551669.jpg", // Image 06
+        "https://i.ibb.co.com/HLFpKCBz/FB-IMG-1795363464878.jpg", // Image 07
+        "https://i.ibb.co.com/Fk3YJbVd/FB-IMG-1795363541458.jpg", // Image 08
+        "https://i.ibb.co.com/nNYvdpFg/FB-IMG-1795363362241.jpg", // Image 09
+        "https://i.ibb.co.com/fGpnmd29/FB-IMG-1795363495083.jpg", // Image 10
+        "https://i.ibb.co.com/BHf1d4wg/FB-IMG-1795363369037.jpg", // Image 11
+        "https://i.ibb.co.com/mCMn3z3Q/FB-IMG-1795363349622.jpg", // Image 12
+        "https://i.ibb.co.com/dJ6Lh685/FB-IMG-1795363304807.jpg", // Image 13
+        "https://i.ibb.co.com/HDwpqbCX/FB-IMG-1795363251411.jpg", // Image 14
+        "https://i.ibb.co.com/wh1LqjTy/FB-IMG-1795363200683.jpg", // Image 15
+        "https://i.ibb.co.com/9HHQZQPC/FB-IMG-1795363188264.jpg", // Image 16
+        "https://i.ibb.co.com/xKgM7dL6/FB-IMG-1795363159873.jpg", // Image 17
+        "https://i.ibb.co.com/0R3YBQws/FB-IMG-1795363177656.jpg", // Image 18
+        "https://i.ibb.co.com/zHfFK7y9/FB-IMG-1795363125153.jpg", // Image 19
+        "https://i.ibb.co.com/xKHFJTSx/FB-IMG-1795363290555.jpg"  // Image 20
+      ];
+
+      /* Card style presets mapped automatically to the 20 links */
+      const CARD_STYLES = [
+        { size: 'art-card--tall', stagger: 'stagger-up' },
+        { size: 'art-card--wide', stagger: 'stagger-down' },
+        { size: 'art-card--square', stagger: '' },
+        { size: 'art-card--cinema', stagger: 'stagger-up' },
+        { size: 'art-card--portrait', stagger: 'stagger-down' },
+        { size: 'art-card--wide', stagger: '' },
+        { size: 'art-card--tall', stagger: 'stagger-up' },
+        { size: 'art-card--square', stagger: 'stagger-down' },
+        { size: 'art-card--cinema', stagger: '' },
+        { size: 'art-card--portrait', stagger: 'stagger-up' },
+        { size: 'art-card--wide', stagger: 'stagger-down' },
+        { size: 'art-card--portrait', stagger: 'stagger-up' },
+        { size: 'art-card--cinema', stagger: '' },
+        { size: 'art-card--tall', stagger: 'stagger-down' },
+        { size: 'art-card--square', stagger: 'stagger-up' },
+        { size: 'art-card--wide', stagger: '' },
+        { size: 'art-card--portrait', stagger: 'stagger-down' },
+        { size: 'art-card--tall', stagger: 'stagger-up' },
+        { size: 'art-card--cinema', stagger: 'stagger-down' },
+        { size: 'art-card--square', stagger: '' }
+      ];
+
+      function generateFallbackArtwork(index) {
+        const palettes = [
+          ['#00f0ff', '#1e293b', '#818cf8'],
+          ['#f472b6', '#1e1b4b', '#38bdf8'],
+          ['#a855f7', '#0f172a', '#2dd4bf']
+        ];
+        const pal = palettes[index % palettes.length];
+        const c = document.createElement('canvas');
+        c.width = 500;
+        c.height = 500;
+        const ctx = c.getContext('2d');
+        const grad = ctx.createLinearGradient(0, 0, 500, 500);
+        grad.addColorStop(0, pal[1]);
+        grad.addColorStop(0.5, pal[2]);
+        grad.addColorStop(1, pal[0]);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 500, 500);
+        return c.toDataURL('image/png');
+      }
+
+      function createArtCard(url, index, isClone) {
+        const style = CARD_STYLES[index % CARD_STYLES.length];
+        const card = document.createElement('div');
+        card.className = `art-card ${style.size} ${style.stagger}`.trim();
+        card.style.setProperty('--i', index);
+
+        const inner = document.createElement('div');
+        inner.className = 'art-card-inner';
+
+        const img = document.createElement('img');
+        img.referrerPolicy = 'no-referrer';
+        img.src = url;
+        img.alt = `Viral Video ${index + 1}`;
+        img.decoding = 'async';
+        img.loading = isClone ? 'lazy' : 'eager';
+
+        img.addEventListener('error', function onErr() {
+          img.removeEventListener('error', onErr);
+          img.src = generateFallbackArtwork(index);
+        });
+
+        inner.appendChild(img);
+        card.appendChild(inner);
+        return card;
+      }
+
+      function mountGallery() {
+        const group1 = document.getElementById('groupRow1');
+        const track1 = document.getElementById('trackRow1');
+        const group2 = document.getElementById('groupRow2');
+        const track2 = document.getElementById('trackRow2');
+
+        const row1 = IMAGE_LINKS.slice(0, 10);
+        const row2 = IMAGE_LINKS.slice(10, 20);
+
+        row1.forEach((url, i) => group1.appendChild(createArtCard(url, i, false)));
+        row2.forEach((url, i) => group2.appendChild(createArtCard(url, i + 10, false)));
+
+        const clone1 = document.createElement('div');
+        clone1.className = 'marquee-group';
+        clone1.setAttribute('aria-hidden', 'true');
+        row1.forEach((url, i) => clone1.appendChild(createArtCard(url, i, true)));
+        track1.appendChild(clone1);
+
+        const clone2 = document.createElement('div');
+        clone2.className = 'marquee-group';
+        clone2.setAttribute('aria-hidden', 'true');
+        row2.forEach((url, i) => clone2.appendChild(createArtCard(url, i + 10, true)));
+        track2.appendChild(clone2);
+      }
+
+      mountGallery();
+
+      /* ========================================================================
+         LIGHTWEIGHT AMBIENT PARTICLE FIELD
+         ======================================================================== */
+      const canvas = document.getElementById('ambientCanvas');
+      const ctx = canvas.getContext('2d');
+      let width = 0;
+      let height = 0;
+      let particles = [];
+      let pulseEnergy = 0;
+
+      function resizeCanvas() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        const count = width < 768 ? 22 : 44;
+        particles = Array.from({ length: count }, () => ({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          vx: (Math.random() - 0.5) * 0.3,
+          vy: (Math.random() - 0.5) * 0.3,
+          r: Math.random() * 1.5 + 0.6,
+          hue: Math.random() > 0.45 ? '0, 240, 255' : '244, 114, 182'
+        }));
+      }
+
+      function renderParticles() {
+        ctx.clearRect(0, 0, width, height);
+        const speedBoost = 1 + pulseEnergy * 3.2;
+        pulseEnergy *= 0.94;
+
+        for (let i = 0; i < particles.length; i++) {
+          const p = particles[i];
+          p.x += p.vx * speedBoost;
+          p.y += p.vy * speedBoost;
+          if (p.x < 0) p.x = width;
+          if (p.x > width) p.x = 0;
+          if (p.y < 0) p.y = height;
+          if (p.y > height) p.y = 0;
+
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r + pulseEnergy, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${p.hue}, ${0.42 + pulseEnergy * 0.45})`;
+          ctx.fill();
+        }
+        requestAnimationFrame(renderParticles);
+      }
+
+      resizeCanvas();
+      renderParticles();
+      window.addEventListener('resize', resizeCanvas, { passive: true });
+
+      /* ========================================================================
+         CURSOR AURA & BUTTON LINK OPEN INTERACTIONS
+         ======================================================================== */
+      const cursorAura = document.getElementById('cursorAura');
+      if (window.matchMedia('(hover: hover) and (pointer: fine)').matches && cursorAura) {
+        window.addEventListener('pointermove', (e) => {
+          cursorAura.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0) translate3d(-50%, -50%, 0)`;
+        }, { passive: true });
+      }
+
+      const btnAurora = document.getElementById('btnAurora');
+      const btnCyber = document.getElementById('btnCyber');
+
+      function spawnRipple(btn, e) {
+        const rect = btn.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        const ripple = document.createElement('span');
+        ripple.className = 'click-ripple';
+        ripple.style.width = ripple.style.height = `${size}px`;
+        ripple.style.left = `${(e.clientX || rect.left + rect.width / 2) - rect.left - size / 2}px`;
+        ripple.style.top = `${(e.clientY || rect.top + rect.height / 2) - rect.top - size / 2}px`;
+        btn.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 700);
+      }
+
+      function openTargetLink(url) {
+        if (!url) return;
+        const win = window.open(url, '_blank', 'noopener,noreferrer');
+        if (!win) {
+          window.location.href = url;
+        }
+      }
+
+      btnCyber.addEventListener('pointermove', (e) => {
+        const rect = btnCyber.getBoundingClientRect();
+        btnCyber.style.setProperty('--mx', `${e.clientX - rect.left}px`);
+        btnCyber.style.setProperty('--my', `${e.clientY - rect.top}px`);
+      });
+
+      btnAurora.addEventListener('click', (e) => {
+        spawnRipple(btnAurora, e);
+        pulseEnergy = 1;
+        openTargetLink(BUTTON_1_LINK);
+      });
+
+      btnCyber.addEventListener('click', (e) => {
+        spawnRipple(btnCyber, e);
+        pulseEnergy = 0.85;
+        openTargetLink(BUTTON_2_LINK);
+      });
+    })();
+  </script>
+</body>
+</html>
